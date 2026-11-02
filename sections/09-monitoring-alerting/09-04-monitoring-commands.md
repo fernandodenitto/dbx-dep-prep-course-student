@@ -57,6 +57,8 @@ Save as `notify.json` with your job id and email, then run `databricks jobs upda
 
 ## Alerts (lesson 9.3)
 
+`my-alert.json` is the file you made in lesson 9.3, at the root of your local clone. Run these from there.
+
 ```bash
 databricks alerts-v2 create-alert --json @my-alert.json
 databricks alerts-v2 list-alerts

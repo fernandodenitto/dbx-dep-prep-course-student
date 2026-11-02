@@ -8,7 +8,7 @@
 # MAGIC efficient incremental downstream processing." Today we do the cost math
 # MAGIC on our own tables, and look at those row-level changes.
 # MAGIC
-# MAGIC > Prereqs: S4 complete (CDF enabled on the dimension, mirror live).
+# MAGIC > Prereqs: S4 complete (row tracking on the dimension, mirror live).
 
 # COMMAND ----------
 

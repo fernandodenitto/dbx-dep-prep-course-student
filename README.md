@@ -48,7 +48,7 @@ tree to find `datagen/`.
 Open `sections/01-welcome-method-fast-forward/01-04-fast-forward-setup`. It builds the baseline in catalog
 `lakeshore`. Coming from the Associate course? Run it anyway: it creates only what's missing.
 
-**3. Install the Databricks CLI.** Lesson 1.4 walks you through it. It's needed from Section 9 on.
+**3. Install the Databricks CLI.** Lesson 1.4 walks you through it. It's needed from Section 8 on.
 
 **4. Follow the sections in order.** Every notebook runs on serverless compute.
 

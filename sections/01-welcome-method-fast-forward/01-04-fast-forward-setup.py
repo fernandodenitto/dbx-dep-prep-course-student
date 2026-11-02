@@ -21,6 +21,12 @@
 # MAGIC > notebook from where it sits: it finds `datagen/datagen.py` by walking up to
 # MAGIC > the repo root. That file is course material, not plumbing: we read it
 # MAGIC > together in the next lesson.
+# MAGIC >
+# MAGIC > **On your laptop, also from this lesson:** bash (on Windows, WSL or Git Bash), the Databricks
+# MAGIC > CLI v1.19.0 or newer, `jq`, and a local clone of the same repo. Sections 8 to 12 run terminal
+# MAGIC > commands from that clone.
+# MAGIC >
+# MAGIC > **Daily quota:** heavy use can disable new runs for the day. Space out your pipeline sessions.
 
 # COMMAND ----------
 
@@ -279,7 +285,7 @@ for table, minimum in checks.items():
 # MAGIC feeds.
 # MAGIC
 # MAGIC One more setup step lives outside this notebook: the Databricks CLI on your
-# MAGIC own machine, installed and logged in once. Sections 9 to 12 use it. The lesson
+# MAGIC own machine, installed and logged in once. Sections 8 to 12 use it. The lesson
 # MAGIC shows the commands; check with `databricks current-user me`.
 
 # COMMAND ----------

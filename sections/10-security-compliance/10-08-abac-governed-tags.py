@@ -10,7 +10,7 @@
 # MAGIC does a schema tag do versus a column tag, who is exempt, and what breaks. So we break it.
 # MAGIC
 # MAGIC Demo objects (dropped at the end): `silver.abac_customers`, `gold.abac_contacts`,
-# MAGIC `bronze.abac_leads`, four functions and every policy.
+# MAGIC `bronze.abac_leads`, three functions and every policy.
 
 # COMMAND ----------
 

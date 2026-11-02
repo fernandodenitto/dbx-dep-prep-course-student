@@ -12,6 +12,8 @@
 # MAGIC An alert is a query, so each use is a query you can run first. This notebook runs the ones Free Edition
 # MAGIC can answer, and says which ones it can't. It creates no alert: the alert itself comes from
 # MAGIC `alert/lakeshore-quarantine-alert.json`, or from the **Alerts** page.
+# MAGIC
+# MAGIC > Prereqs: lesson 2.6 (`gold.revenue_metrics`) and lesson 8.2 (`silver.sdp_orders_quarantine`).
 
 # COMMAND ----------
 
@@ -82,25 +84,37 @@
 # MAGIC %md
 # MAGIC ## 5. Governed business metrics: a metric view
 # MAGIC
-# MAGIC The shape, from the docs' alert patterns. Reference the metric view by its full name and aggregate
-# MAGIC with `MEASURE`, so the definition of revenue stays in one governed place:
+# MAGIC `gold.revenue_metrics` from lesson 2.6, by its full name. The worst month's share of booked revenue
+# MAGIC that actually settled. Condition: `net_share < 0.6`. Run it first and set the threshold against your
+# MAGIC own number. The refund arithmetic isn't restated here: change the definition in the metric view and
+# MAGIC this alert follows. In production you'd also filter to recent months; our data is a fixed sample.
+
+# COMMAND ----------
+
+# MAGIC %sql
+# MAGIC SELECT order_month, MEASURE(net_share) AS net_share
+# MAGIC FROM lakeshore.gold.revenue_metrics
+# MAGIC GROUP BY ALL
+# MAGIC ORDER BY net_share
+# MAGIC LIMIT 1;
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 6. Anomaly signals: 📖 theory, not run here
 # MAGIC
-# MAGIC ```sql
-# MAGIC SELECT MEASURE(net_revenue) AS net_revenue
-# MAGIC FROM <catalog>.<schema>.<metric_view>
-# MAGIC WHERE order_date = current_date() - INTERVAL 1 DAY
-# MAGIC ```
+# MAGIC A threshold needs you to know the number. Anomaly detection (Public Preview) learns it per table:
+# MAGIC **freshness** (is the next commit unusually late?) and **completeness** (are the last 24 hours' rows
+# MAGIC below the predicted range?). You enable it per schema or catalog, and it has its own alert rules, in the
+# MAGIC Data Quality Monitoring UI. Results land in `system.data_quality_monitoring.table_results`. On our Free
+# MAGIC Edition workspace that system schema doesn't exist, and a course workspace has no history to train on, so
+# MAGIC we can't show it. A hand-written threshold like query 1 is what you can practice.
 # MAGIC
-# MAGIC ## 6. Anomaly signals: 📖 not run here
+# MAGIC ## 7. AI agent quality: 📖 theory, not run here
 # MAGIC
-# MAGIC Anomaly detection has its own alert rules, set in the Data Quality Monitoring UI per schema or catalog.
-# MAGIC On our Free Edition workspace the system schema behind its results, `system.data_quality_monitoring`,
-# MAGIC doesn't exist, so we can't show it. A hand-written threshold like query 1 is what you can practice.
-# MAGIC
-# MAGIC ## 7. AI agent quality: 📖 not run here
-# MAGIC
-# MAGIC This course builds no agent. The docs' route is production monitoring with MLflow scorers, then an alert
-# MAGIC on those metrics. Know that it's on the guide's list, and that it's still the same mechanism.
+# MAGIC This course builds no agent. The docs' route is MLflow 3 production monitoring (Beta): scorers run on a
+# MAGIC sample of an agent's traces and attach assessments to them. The SQL alerts page lists agent quality metrics
+# MAGIC as a use, without showing the query, so we don't invent one. Scorers judge traces, not tables.
 # MAGIC
 # MAGIC ## 8. Job branching: the alert as a task
 # MAGIC

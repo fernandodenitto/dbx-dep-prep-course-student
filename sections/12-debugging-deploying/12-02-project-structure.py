@@ -21,8 +21,11 @@
 # MAGIC
 # MAGIC The docs give two rules. A notebook's working directory goes on `sys.path`, and in a Git
 # MAGIC folder **the root of the repo** goes there too. They also warn that on serverless the
-# MAGIC working directory is not guaranteed, so build absolute paths. We find the repo root
-# MAGIC through the rule itself: it is the `sys.path` entry that holds `datagen/`.
+# MAGIC working directory is not guaranteed, so build absolute paths. We measured it from a Git
+# MAGIC folder on serverless jobs: it was the notebook's own folder, which the earlier notebooks'
+# MAGIC bootstrap relies on. That's a measurement, not a guarantee, and a package with relative
+# MAGIC imports is more robust, because they resolve from the package itself. Here we find the repo
+# MAGIC root through the rule: it is the `sys.path` entry that holds `datagen/`.
 
 # COMMAND ----------
 

@@ -1,6 +1,6 @@
 # Lesson 12.4: REST API and CLI commands
 
-Run these from a local clone of this repo, in `sections/12-debugging-deploying/`, with the CLI profile
+Run these from your local clone (lesson 1.4), in `sections/12-debugging-deploying/`, with the CLI profile
 from Section 1. Checked on Databricks CLI v1.19.0 on 2026-11-01. Every command takes your default profile,
 or add `--profile <name>`. `jq` only pulls fields out of the JSON.
 

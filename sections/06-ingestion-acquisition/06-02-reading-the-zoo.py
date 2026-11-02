@@ -6,8 +6,9 @@
 # MAGIC CSV and Binary.** JSON and CSV are already in the landing volume. This notebook writes
 # MAGIC what's missing into a `zoo/` corner and reads every one of them.
 # MAGIC
-# MAGIC > Prereqs: fast-forward. Self-contained and idempotent. The one demo table,
-# MAGIC > `bronze.zoo_iceberg`, is dropped at the end.
+# MAGIC > Prereqs: fast-forward. Self-contained and idempotent. The demo tables
+# MAGIC > (`bronze.zoo_iceberg`, `bronze.zoo_invoices`, `bronze.zoo_parquet_drops`) and the
+# MAGIC > Auto Loader folders are removed at the end, so no later lesson sees them.
 
 # COMMAND ----------
 
@@ -72,7 +73,87 @@ print("first bytes:", bin_df.first()["content"][:40])
 # MAGIC That's a CSV, read as bytes on purpose. One row, one file, the raw bytes in `content`.
 # MAGIC It's the door for images, PDFs and audio, not a faster way to read tables.
 # MAGIC
-# MAGIC ## 4. Delta and Iceberg: table formats, read as tables
+# MAGIC ## 4. The same formats, incrementally: Auto Loader
+# MAGIC `spark.read` reads the whole folder every time. "Ingest PDFs as they arrive" means Auto Loader,
+# MAGIC with `cloudFiles.format` set to `binaryFile`. Same four columns, and a checkpoint remembers
+# MAGIC which files it has seen. The docs list eight values for that option: `avro`, `binaryFile`, `csv`,
+# MAGIC `json`, `orc`, `parquet`, `text`, `xml`.
+# MAGIC
+# MAGIC Our "PDFs" are small text files with a `.pdf` name. `binaryFile` never looks inside, so it
+# MAGIC can't tell, and that's the point.
+
+# COMMAND ----------
+
+INCOMING = f"{ZOO}/incoming"
+CHECKPOINTS = f"{ZOO}/_checkpoints/zoo_autoloader"
+
+def reset_auto_loader_demo():
+    """Remove only this lesson's folders and tables: lesson 6.6 has its own checkpoint in zoo/."""
+    for table in ("zoo_invoices", "zoo_parquet_drops"):
+        spark.sql(f"DROP TABLE IF EXISTS lakeshore.bronze.{table}")
+    for path in (INCOMING, CHECKPOINTS):
+        dbutils.fs.rm(path, True)
+
+def load_new_files(fmt, glob, source, target):
+    """One Auto Loader run: only files its checkpoint hasn't seen, then stop."""
+    (spark.readStream.format("cloudFiles")
+     .option("cloudFiles.format", fmt)
+     .option("cloudFiles.schemaLocation", f"{CHECKPOINTS}/{target}/schema")
+     .option("pathGlobFilter", glob)
+     .load(source)
+     .writeStream
+     .option("checkpointLocation", f"{CHECKPOINTS}/{target}/stream")
+     .trigger(availableNow=True)
+     .toTable(f"lakeshore.bronze.{target}")
+     .awaitTermination())
+
+reset_auto_loader_demo()
+
+# COMMAND ----------
+
+def drop_invoice(n):
+    dbutils.fs.put(f"{INCOMING}/invoices/invoice-{n:03}.pdf", f"%PDF-1.4 invoice {n}", overwrite=True)
+
+drop_invoice(1)
+drop_invoice(2)
+load_new_files("binaryFile", "*.pdf", f"{INCOMING}/invoices", "zoo_invoices")
+assert spark.table("lakeshore.bronze.zoo_invoices").count() == 2
+
+drop_invoice(3)
+load_new_files("binaryFile", "*.pdf", f"{INCOMING}/invoices", "zoo_invoices")
+invoices = spark.table("lakeshore.bronze.zoo_invoices")
+assert invoices.count() == 3 and invoices.select("path").distinct().count() == 3
+invoices.select("path", "length").orderBy("path").show(truncate=False)
+print("Second run read one new file. Nothing was read twice.")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC `binaryFile` has a fixed schema, so nothing is inferred. The docs still recommend setting
+# MAGIC `cloudFiles.schemaLocation` for it, which is why it's there. Parquet is different: Auto Loader
+# MAGIC reads the types from the files and, across files, takes the widest. Two drops, two runs, and the
+# MAGIC types survive without a hint.
+
+# COMMAND ----------
+
+first_drop = sample.limit(150)
+first_drop.write.mode("append").format("parquet").save(f"{INCOMING}/parquet")
+load_new_files("parquet", "*.parquet", f"{INCOMING}/parquet", "zoo_parquet_drops")
+assert spark.table("lakeshore.bronze.zoo_parquet_drops").count() == 150
+
+sample.exceptAll(first_drop).write.mode("append").format("parquet").save(f"{INCOMING}/parquet")
+load_new_files("parquet", "*.parquet", f"{INCOMING}/parquet", "zoo_parquet_drops")
+drops = spark.table("lakeshore.bronze.zoo_parquet_drops")
+got = {f.name: f.dataType for f in drops.schema.fields}
+
+assert drops.count() == 200, drops.count()
+assert all(got[name] == dtype for name, dtype in expected), got
+print("Parquet through Auto Loader: 150, then 200 rows, typed schema preserved")
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## 5. Delta and Iceberg: table formats, read as tables
 # MAGIC Both are Parquet files plus a metadata layer, and both are read by name in Unity
 # MAGIC Catalog. Lesson 6.6 goes deeper on Iceberg. Today, just the proof that it's the same
 # MAGIC reading door.
@@ -108,6 +189,7 @@ assert formats == {"lakeshore.silver.payments": "delta",
 # MAGIC | Parquet | `spark.read.format("parquet")`, types included |
 # MAGIC | JSON, CSV | `read_files(..., format, options)`, declare a schema or accept inference |
 # MAGIC | Binary | `.format("binaryFile")`: path, modificationTime, length, content |
+# MAGIC | Binary or Parquet, as files arrive | Auto Loader: `cloudFiles.format`, a schema location, a checkpoint |
 # MAGIC | Delta, Iceberg | by table name, batch or stream |
 # MAGIC
 # MAGIC Beyond the exam: Spark also reads ORC, Avro, XML (with `rowTag`) and plain text. The
@@ -118,4 +200,5 @@ assert formats == {"lakeshore.silver.payments": "delta",
 # COMMAND ----------
 
 spark.sql("DROP TABLE IF EXISTS lakeshore.bronze.zoo_iceberg")
+reset_auto_loader_demo()
 dbutils.notebook.exit("zoo-complete")

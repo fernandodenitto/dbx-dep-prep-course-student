@@ -1,11 +1,12 @@
 # Lesson 12.5: bundle commands
 
-Run these from a local clone of this repo, in `sections/12-debugging-deploying/bundle/`, with the CLI
+Run these from your local clone (lesson 1.4), in `sections/12-debugging-deploying/bundle/`, with the CLI
 profile from Section 1. Checked on Databricks CLI v1.19.0 on 2026-11-01.
 
 ```bash
-git clone https://github.com/fernandodenitto/dbx-dep-prep-course-student
-cd dbx-dep-prep-course-student/sections/12-debugging-deploying/bundle
+cd dbx-dep-prep-course-student       # the clone from lesson 1.4
+git pull
+cd sections/12-debugging-deploying/bundle
 ```
 
 ## Validate both targets
@@ -27,6 +28,7 @@ databricks bundle summary -t dev
 ```
 
 It prints the pytest report, then the last line of the job: `smoke-ok:lakeshore:6 tables`.
+`RESOURCE_EXHAUSTED` at start after heavy serverless use means capacity is cooling: wait a few minutes and repeat `bundle run`.
 The job creates `[dev <you>] lakeshore-pro-smoke`, the pipeline
 `[dev <you>] lakeshore-pro-graded-orders`, and the schema `lakeshore.dev_<you>_pro_bundle_dev`.
 

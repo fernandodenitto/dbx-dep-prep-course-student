@@ -1,6 +1,6 @@
 # Lesson 12.3: debug lab commands
 
-Run these from a local clone of this repo, in `sections/12-debugging-deploying/`, with the CLI profile
+Run these from your local clone (lesson 1.4), in `sections/12-debugging-deploying/`, with the CLI profile
 from Section 1. Checked on Databricks CLI v1.19.0 on 2026-11-01. The lab's tasks read
 `lakeshore.gold.fact_order_items` and write two small tables, `gold.debug_lab_revenue` and
 `gold.debug_lab_top`. `jq` only pulls fields out of the JSON.

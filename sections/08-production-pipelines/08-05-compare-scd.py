@@ -22,8 +22,9 @@ assert "__END_AT" not in scd1.columns, "SCD1 has no validity columns"
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC Cross-check against `gold.customer_current`, the Section 4 mirror. It only covers customers that
-# MAGIC changed after change data feed was enabled, so we compare where both have the customer.
+# MAGIC Cross-check against `gold.customer_current`, the Section 4 mirror. It stops at the last time you ran
+# MAGIC lesson 4.3, and the pipeline reads every CDC file in the folder, including the batch 7.6 added. So we
+# MAGIC compare where both have the customer, and a small count here is that later batch, not a bug.
 
 # COMMAND ----------
 
