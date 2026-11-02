@@ -291,6 +291,7 @@ Every official link the lessons use, generated from each lesson's `## Resources`
 - PostgreSQL connection and privileges: https://docs.databricks.com/aws/en/query-federation/postgresql (11.3)
 - Lakebase upgrade to Autoscaling: https://docs.databricks.com/aws/en/oltp/upgrade-to-autoscaling (11.3)
 - Lakebase authentication: https://docs.databricks.com/aws/en/oltp/projects/authentication (11.3)
+- Manage Lakebase projects (soft delete, restore, purge): https://docs.databricks.com/aws/en/oltp/projects/manage-projects (11.3)
 - What is Clean Rooms?: https://docs.databricks.com/aws/en/clean-rooms/ (11.4)
 - Create clean rooms: https://docs.databricks.com/aws/en/clean-rooms/create-clean-room (11.4)
 - Run notebooks: https://docs.databricks.com/aws/en/clean-rooms/clean-room-notebook (11.4)

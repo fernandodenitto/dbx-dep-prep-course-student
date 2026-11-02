@@ -12,7 +12,7 @@
 # MAGIC > Free Edition allows **one Lakebase project per account**. If you already have one under
 # MAGIC > another name, change `PROJECT` below to it and skip the teardown of the project.
 # MAGIC > Everything here also has a CLI form: `databricks postgres create-project lakeshore-pg`,
-# MAGIC > `list-endpoints`, `generate-database-credential`, `delete-project`.
+# MAGIC > `list-endpoints`, `generate-database-credential`, `delete-project --purge`.
 
 # COMMAND ----------
 
@@ -42,21 +42,27 @@ SCOPE = "lakeshore-secrets"
 w = WorkspaceClient()
 api = w.api_client
 try:
-    api.do("GET", f"/api/2.0/postgres/projects/{PROJECT}")
-    print("project already exists:", PROJECT)
+    project = api.do("GET", f"/api/2.0/postgres/projects/{PROJECT}")
+    if project.get("delete_time"):                      # deleted, but the name stays reserved for 7 days
+        api.do("POST", f"/api/2.0/postgres/projects/{PROJECT}/undelete", body={})
+        print("project restored:", PROJECT)
+    else:
+        print("project already exists:", PROJECT)
 except NotFound:
     api.do("POST", "/api/2.0/postgres/projects", query={"project_id": PROJECT}, body={})
     print("project requested:", PROJECT)
 
+HOST = None
 for _ in range(40):
     try:
         endpoint = api.do("GET", f"/api/2.0/postgres/{ENDPOINT}")
-        if endpoint["status"].get("hosts", {}).get("host"):
+        HOST = endpoint["status"].get("hosts", {}).get("host")
+        if HOST:
             break
     except NotFound:
         pass
     time.sleep(15)
-HOST = endpoint["status"]["hosts"]["host"]
+assert HOST, f"{ENDPOINT} has no host after 10 minutes: check the project in the Lakebase UI"
 print("host is regional, and it's ready:", HOST.split(".", 1)[1])
 
 # COMMAND ----------
@@ -223,7 +229,7 @@ spark.sql("DROP CATALOG IF EXISTS lakeshore_pg CASCADE")
 spark.sql("DROP CONNECTION IF EXISTS lakeshore_pg_conn")
 w.secrets.delete_secret(scope=SCOPE, key="pg_user")
 w.secrets.delete_secret(scope=SCOPE, key="pg_token")
-api.do("DELETE", f"/api/2.0/postgres/projects/{PROJECT}")
+api.do("DELETE", f"/api/2.0/postgres/projects/{PROJECT}", query={"purge": "true"})  # really gone, so a re-run starts clean
 print("✓ catalog, connection, secrets and project removed")
 
 # COMMAND ----------
