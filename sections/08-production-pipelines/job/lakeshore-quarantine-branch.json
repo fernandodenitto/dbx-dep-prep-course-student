@@ -1,0 +1,30 @@
+{
+  "name": "lakeshore-quarantine-branch",
+  "max_concurrent_runs": 1,
+  "tasks": [
+    {
+      "task_key": "check_quarantine",
+      "alert_task": {
+        "alert_id": "__ALERT_ID__",
+        "warehouse_id": "__WAREHOUSE_ID__"
+      }
+    },
+    {
+      "task_key": "is_triggered",
+      "depends_on": [{ "task_key": "check_quarantine" }],
+      "condition_task": {
+        "left": "{{tasks.check_quarantine.output.alert_state}}",
+        "op": "EQUAL_TO",
+        "right": "TRIGGERED"
+      }
+    },
+    {
+      "task_key": "summarize_rejects",
+      "depends_on": [{ "task_key": "is_triggered", "outcome": "true" }],
+      "notebook_task": {
+        "notebook_path": "__GIT_FOLDER__/sections/09-monitoring-alerting/09-03-summarize-rejects",
+        "source": "WORKSPACE"
+      }
+    }
+  ]
+}

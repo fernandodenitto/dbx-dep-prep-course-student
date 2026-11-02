@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lakeshore-fmt"
+version = "1.0.0"
+description = "Lesson 5.4: a tiny private library, so we have something real to package."
+requires-python = ">=3.10"
+dependencies = ["tabulate>=0.9"]
+
+[tool.setuptools.packages.find]
+where = ["src"]

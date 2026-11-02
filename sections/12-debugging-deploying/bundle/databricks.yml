@@ -1,0 +1,57 @@
+# Lakeshore Professional: a Declarative Automation Bundle (formerly Databricks Asset Bundle).
+# One codebase, two targets. Same files, different overrides.
+
+bundle:
+  name: lakeshore-pro
+
+include:
+  - resources/*.yml        # forget this line and you deploy nothing
+
+variables:
+  catalog:
+    description: Catalog holding the Lakeshore tables. One catalog on Free Edition, so no target overrides it.
+    default: lakeshore
+  output_schema:
+    description: Schema that receives what this bundle builds
+    default: pro_bundle
+
+targets:
+  # No `workspace.host` on purpose: the CLI takes the workspace from your authenticated
+  # profile, so this file works unchanged in YOUR workspace. A company bundle pins it.
+
+  dev:
+    mode: development      # prefixes names, pauses schedules, tags with `dev`
+    default: true
+    variables:
+      output_schema: pro_bundle_dev
+
+  prod:
+    mode: production       # clean names; schedules stay exactly as declared
+    workspace:
+      # The CLI refuses `mode: production` without this: one shared copy of the bundle, not
+      # one per developer. A company uses a path like /Workspace/Production/... instead.
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    # Who the deployed job runs as, and who may touch it. On Free Edition that is you. In a
+    # company, run_as is `service_principal_name: <application id>`, and CI deploys as it.
+    run_as:
+      user_name: ${workspace.current_user.userName}
+    permissions:
+      - level: CAN_MANAGE
+        user_name: ${workspace.current_user.userName}
+    # A company also pins the branch here. Production mode then refuses any other branch:
+    #   git:
+    #     branch: main
+    variables:
+      output_schema: pro_bundle_prod
+    # Per-target resource overrides: these join the definition in resources/, matched by
+    # the job's key and by task_key.
+    resources:
+      jobs:
+        lakeshore_pro_smoke:
+          schedule:
+            # Remove this and the prod job runs every morning. Production mode never pauses
+            # anything: it deploys what the YAML declares.
+            pause_status: PAUSED
+          tasks:
+            - task_key: smoke
+              max_retries: 1

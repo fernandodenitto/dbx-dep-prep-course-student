@@ -1,0 +1,49 @@
+{
+  "name": "lakeshore-debug-lab",
+  "max_concurrent_runs": 1,
+  "parameters": [
+    {
+      "name": "catalog",
+      "default": "lakeshore"
+    },
+    {
+      "name": "schema",
+      "default": "gold"
+    },
+    {
+      "name": "top_n",
+      "default": "5"
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "prepare",
+      "notebook_task": {
+        "notebook_path": "__REPO__/sections/12-debugging-deploying/12-03-debug-prepare"
+      }
+    },
+    {
+      "task_key": "rank_top",
+      "depends_on": [
+        {
+          "task_key": "prepare"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "__REPO__/sections/12-debugging-deploying/12-03-debug-target"
+      },
+      "disable_auto_optimization": true
+    },
+    {
+      "task_key": "publish",
+      "depends_on": [
+        {
+          "task_key": "rank_top"
+        }
+      ],
+      "notebook_task": {
+        "notebook_path": "__REPO__/sections/12-debugging-deploying/12-03-debug-publish"
+      }
+    }
+  ]
+}

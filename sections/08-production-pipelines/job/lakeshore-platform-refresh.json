@@ -1,0 +1,80 @@
+{
+  "name": "lakeshore-platform-refresh",
+  "max_concurrent_runs": 1,
+  "queue": { "enabled": false },
+  "performance_target": "PERFORMANCE_OPTIMIZED",
+  "parameters": [
+    { "name": "max_quarantine", "default": "10" }
+  ],
+  "trigger": {
+    "pause_status": "PAUSED",
+    "file_arrival": {
+      "url": "/Volumes/lakeshore/landing/files/platform_trigger/"
+    }
+  },
+  "environments": [
+    {
+      "environment_key": "team_env",
+      "spec": {
+        "environment_version": "5",
+        "dependencies": ["humanize==4.12.3"]
+      }
+    }
+  ],
+  "tasks": [
+    {
+      "task_key": "refresh_platform",
+      "pipeline_task": {
+        "pipeline_id": "__PIPELINE_ID__",
+        "full_refresh": false
+      }
+    },
+    {
+      "task_key": "quality_gate",
+      "depends_on": [{ "task_key": "refresh_platform" }],
+      "notebook_task": {
+        "notebook_path": "__GIT_FOLDER__/sections/08-production-pipelines/08-06-quality-gate",
+        "source": "WORKSPACE"
+      },
+      "max_retries": 2,
+      "min_retry_interval_millis": 60000
+    },
+    {
+      "task_key": "gate_check",
+      "depends_on": [{ "task_key": "quality_gate" }],
+      "condition_task": {
+        "left": "{{tasks.quality_gate.values.quarantine_ok}}",
+        "op": "EQUAL_TO",
+        "right": "true"
+      }
+    },
+    {
+      "task_key": "per_topic_summary",
+      "depends_on": [{ "task_key": "gate_check", "outcome": "true" }],
+      "for_each_task": {
+        "inputs": "[\"orders\", \"payments\", \"customers\"]",
+        "concurrency": 2,
+        "task": {
+          "task_key": "per_topic_iteration",
+          "notebook_task": {
+            "notebook_path": "__GIT_FOLDER__/sections/08-production-pipelines/08-06-per-topic",
+            "source": "WORKSPACE",
+            "base_parameters": { "topic": "{{input}}" }
+          }
+        }
+      }
+    },
+    {
+      "task_key": "notify_ops",
+      "depends_on": [{ "task_key": "per_topic_summary" }],
+      "notebook_task": {
+        "notebook_path": "__GIT_FOLDER__/sections/08-production-pipelines/08-07-notify-ops",
+        "source": "WORKSPACE",
+        "base_parameters": { "run_id": "{{job.run_id}}" }
+      },
+      "environment_key": "team_env",
+      "disable_auto_optimization": true,
+      "max_retries": 0
+    }
+  ]
+}

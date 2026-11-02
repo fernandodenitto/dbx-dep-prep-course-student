@@ -1,0 +1,51 @@
+# The job that proves the deployed copy works, in the order CI would want it:
+# unit tests, then the pipeline, then a check against real tables.
+#
+# The schedule declares no pause_status, which means live. Development mode pauses it; the
+# prod target in databricks.yml overrides it.
+
+resources:
+  jobs:
+    lakeshore_pro_smoke:
+      name: lakeshore-pro-smoke
+
+      schedule:
+        quartz_cron_expression: "0 0 6 * * ?"
+        timezone_id: UTC
+
+      parameters:
+        - name: catalog
+          default: ${var.catalog}
+        - name: output_schema
+          default: ${resources.schemas.pro_output.name}
+        - name: src_path
+          default: ${workspace.file_path}/src
+
+      # A serverless environment: what this job's Python tasks need installed, declared
+      # with the code that needs it.
+      environments:
+        - environment_key: test_env
+          spec:
+            environment_version: "4"
+            dependencies:
+              - pytest==8.*
+
+      tasks:
+        - task_key: unit_tests
+          environment_key: test_env
+          spark_python_task:
+            python_file: ../tests/run_tests.py
+            parameters:
+              - ${workspace.file_path}
+
+        - task_key: graded_orders
+          depends_on:
+            - task_key: unit_tests
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.lakeshore_pro_graded_orders.id}
+
+        - task_key: smoke
+          depends_on:
+            - task_key: graded_orders
+          notebook_task:
+            notebook_path: ../notebooks/smoke_check.py

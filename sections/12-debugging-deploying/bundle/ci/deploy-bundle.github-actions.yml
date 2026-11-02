@@ -1,0 +1,63 @@
+# Sample GitHub Actions workflow: tests on every pull request, deploy to prod on merge.
+# To use it, copy it to .github/workflows/ at the root of YOUR repository, and set
+# `working-directory` to wherever databricks.yml sits.
+#
+# It authenticates with workload identity federation: no Databricks secret is stored in
+# GitHub. It needs a service principal with a federation policy, which means an account
+# console, so it cannot run against Free Edition. Lesson 12.8 draws the whole path.
+
+name: deploy-bundle
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write          # lets the job ask GitHub for an OIDC token
+  contents: read
+
+defaults:
+  run:
+    working-directory: bundle
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "pyspark==4.*" "pytest==8.*"
+      - run: pytest
+
+  validate:
+    needs: test
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}   # the service principal's application id
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle validate -t dev
+      - run: databricks bundle validate -t prod
+
+  deploy:
+    if: github.event_name == 'push'
+    needs: validate
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: databricks/setup-cli@main
+      - run: databricks bundle deploy -t prod
+      - run: databricks bundle run lakeshore_pro_smoke -t prod

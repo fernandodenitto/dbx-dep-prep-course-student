@@ -1,0 +1,9 @@
+# A Unity Catalog schema as a bundle resource. Each target names its own through a variable,
+# so dev and prod never write to the same place. `bundle destroy` deletes it and its tables.
+
+resources:
+  schemas:
+    pro_output:
+      catalog_name: ${var.catalog}
+      name: ${var.output_schema}
+      comment: Built by the lakeshore-pro bundle. Safe to destroy.

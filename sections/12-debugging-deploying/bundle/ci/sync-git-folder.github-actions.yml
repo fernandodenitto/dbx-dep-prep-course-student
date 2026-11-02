@@ -1,0 +1,26 @@
+# Sample GitHub Actions workflow for the code-only path: on merge to main, pull the production
+# Git folder. It moves notebooks and files, never job or pipeline definitions.
+# Same authentication as deploy-bundle: workload identity federation for a service principal,
+# so it cannot run against Free Edition. Lesson 12.8.
+
+name: sync-production-git-folder
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    environment: prod
+    env:
+      DATABRICKS_AUTH_TYPE: github-oidc
+      DATABRICKS_HOST: ${{ vars.DATABRICKS_HOST }}
+      DATABRICKS_CLIENT_ID: ${{ vars.DATABRICKS_CLIENT_ID }}
+    steps:
+      - uses: databricks/setup-cli@main
+      - run: databricks repos update /Workspace/Production/lakeshore --branch main

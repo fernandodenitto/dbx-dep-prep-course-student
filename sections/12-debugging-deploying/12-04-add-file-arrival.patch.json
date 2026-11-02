@@ -1,0 +1,9 @@
+{
+  "job_id": __JOB_ID__,
+  "new_settings": {
+    "trigger": {
+      "pause_status": "PAUSED",
+      "file_arrival": {"url": "/Volumes/lakeshore/landing/files/topics/"}
+    }
+  }
+}

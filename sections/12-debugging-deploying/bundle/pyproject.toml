@@ -1,0 +1,20 @@
+# The Python half of the project. pytest reads it here and on a CI runner; `uv build --wheel`
+# reads it the day you decide this package should ship as a wheel (lesson 12.2).
+
+[project]
+name = "lakeshore-pro"
+version = "0.1.0"
+description = "Shared transforms for the Lakeshore platform"
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lakeshore_pro"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

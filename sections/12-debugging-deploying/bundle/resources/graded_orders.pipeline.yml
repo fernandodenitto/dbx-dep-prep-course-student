@@ -1,0 +1,18 @@
+# A Lakeflow pipeline as a bundle resource. Development mode sets `development: true` on it.
+# Production mode rejects `development: true`, so the key stays out and each target decides.
+
+resources:
+  pipelines:
+    lakeshore_pro_graded_orders:
+      name: lakeshore-pro-graded-orders
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.pro_output.name}
+      serverless: true
+      root_path: ../src           # added to sys.path, so the source file can import lakeshore_pro
+      configuration:
+        source_table: ${var.catalog}.bronze.bus_raw
+      libraries:
+        - file:
+            path: ../pipelines/graded_orders.py
+      # Third-party packages for a pipeline go under `environment: dependencies:`, never in a
+      # runtime %pip: pipelines cannot restart the Python process.

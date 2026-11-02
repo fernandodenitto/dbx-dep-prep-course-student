@@ -1,0 +1,15 @@
+{
+  "name": "lakeshore-top-products",
+  "max_concurrent_runs": 1,
+  "parameters": [
+    {"name": "catalog", "default": "lakeshore"},
+    {"name": "schema", "default": "gold"},
+    {"name": "top_n", "default": "5"}
+  ],
+  "tasks": [
+    {
+      "task_key": "refresh",
+      "notebook_task": {"notebook_path": "__REPO__/sections/12-debugging-deploying/12-04-refresh-top-products"}
+    }
+  ]
+}
