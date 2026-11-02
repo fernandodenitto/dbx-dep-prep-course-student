@@ -87,7 +87,7 @@ resources.md      every official doc link the lessons use, by section
 | | |
 |---|---|
 | **Workspace** | A [Free Edition](https://www.databricks.com/learn/free-edition) account |
-| **From Section 9** | The [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools/cli/install) and a configured profile |
+| **From Section 8** | The [Databricks CLI](https://docs.databricks.com/aws/en/dev-tools/cli/install) and a configured profile |
 | **Section 12, optional** | Python and a GitHub account, to run the tests locally and the CI sketch |
 
 ## If something goes wrong

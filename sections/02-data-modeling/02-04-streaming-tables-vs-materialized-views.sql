@@ -21,6 +21,12 @@
 
 -- COMMAND ----------
 
+-- Safe to re-run: clear what a run that stopped halfway left behind.
+DROP TABLE IF EXISTS lakeshore.gold.st_orders_demo;
+DROP MATERIALIZED VIEW IF EXISTS lakeshore.gold.mv_revenue_by_method_demo;
+
+-- COMMAND ----------
+
 -- MAGIC %md
 -- MAGIC ## 1. A streaming table: incremental ingestion
 -- MAGIC The STREAM keyword makes read_files incremental: files are discovered
